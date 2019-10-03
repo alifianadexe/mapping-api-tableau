@@ -41,21 +41,15 @@
         var tableData = [];
         // Iterate over the JSON object
         for (var i = 0, len = dataTable.length; i < len; i++) {
-            
-            
-            
-            tableData.push({
-                "id": dataTable[i].id,
-                "employee_name": dataTable[i].employee_name  ,
-                "employee_salary": dataTable[i].employee_salary,
-                "employee_age": dataTable[i].employee_age,
-                "profile_image": dataTable[i].profile_image
-            });
+            data = {}
+            for (const [key, value] of Object.entries(cols)){
+                number = i.toString()
+                data[value["id"]] = eval("dataTable["+ number +"]." + value["id"])
+            }   
+            tableData.push(data);
         }
-
         table.appendRows(tableData);
         doneCallback();
-        
     };
    
     
