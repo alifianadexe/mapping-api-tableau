@@ -5,7 +5,7 @@
     var dataTable = null;
     var map = null;
     var cols = [];
-    var myUrl = "http://dummy.restapiexample.com/api/v1/employees";
+    var myUrl = "http://localhost/tableau-api";
     
     $.ajax({
         url: myUrl,
@@ -13,24 +13,17 @@
         async: false,
         success: function(result) {
             dataTable = result
-            console.log(dataTable)
             map = dataTable[0]   
-            for (const [key, value] of Object.entries(map)) {
-                column_dict = {
-                    id : key,
-                    alias : key.toString().toUpperCase().replace("_", " "),
-                    dataType: window["tableau"]["dataTypeEnum"][typeof(value)]
-                }
-                cols.push(column_dict);
-            }
+            cols = getCols(map)
         }
     });
-
+    
     var myConnector = tableau.makeConnector();    
     myConnector.getSchema = function(schemaCallback) {
+        console.log(cols)
         var tableSchema = {
-            id: "customer",
-            alias: "Customer",
+            id: "result",
+            alias: "Result",
             columns: cols
         };
         schemaCallback([tableSchema]);
@@ -42,9 +35,9 @@
         // Iterate over the JSON object
         for (var i = 0, len = dataTable.length; i < len; i++) {
             data = {}
-            for (const [key, value] of Object.entries(cols)){
+            for (key in cols) {
                 number = i.toString()
-                data[value["id"]] = eval("dataTable["+ number +"]." + value["id"])
+                data[cols[key]["id"]] = eval("dataTable["+ number +"]." + cols[key]["id"])
             }   
             tableData.push(data);
         }
@@ -58,11 +51,42 @@
     // Create event listeners for when the user submits the form
     $(document).ready(function() {
         $("#submitButton").click(function() {
-            tableau.connectionName = "Customer"; // This will be the data source name in Tableau
+            tableau.connectionName = "Result API"; // This will be the data source name in Tableau
             tableau.submit(); // This sends the connector object to Tableau
         });
     });
 })();
 
+function getType(value){
+    result = null
+    if(typeof(value)  != 'undefined' && value != null){
+        if(isNaN(value)){
+            result = typeof(value)
+        }else{
+            if(Number(value) === value && value % 1 !== 0){
+                result = "float"
+            }else{
+                result = "int"
+            }
+        }
+    }else{
+        result = "string"
+    }
+    return result
+}
 
-
+function getCols(map){
+    cols = []
+    for (key in map) {
+        tipe = getType(map[key])
+        console.log(map[key])
+        column_dict = {
+            id : key,
+            alias : key.toString().toUpperCase().replace("_", " "),
+            dataType: window["tableau"]["dataTypeEnum"][tipe]
+        }
+        
+        cols.push(column_dict);
+    }
+    return cols
+}
